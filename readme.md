@@ -181,20 +181,21 @@ To add new functionality:
        srv := server.NewMCPServer("UserService", mcp.LATEST_PROTOCOL_VERSION)
        // Register tools (e.g., user info retrieval)
        srv.AddTool(tools.GetUserInfoById(c))
-   // Start SSE server to receive agent requests
-   go func() {
-       sseServer := server.NewSSEServer(srv, server.WithBaseURL("127.0.0.1:12345"))
-       fmt.Println("MCP Server starting on http://localhost:12345...")
-       err := sseServer.Start("127.0.0.1:12345")
-       if err != nil {
-           fmt.Println("MCP Server failed to start:", err.Error())
-       }
-   }()
+       // Start SSE server to receive agent requests
+       go func() {
+           sseServer := server.NewSSEServer(srv, server.WithBaseURL("127.0.0.1:12345"))
+           fmt.Println("MCP Server starting on http://localhost:12345...")
+           err := sseServer.Start("127.0.0.1:12345")
+           if err != nil {
+               fmt.Println("MCP Server failed to start:", err.Error())
+           }
+       }()
+   }
    ```
    ###### 2. Extending MCP Tools
-
+   
    To add new MCP tools (for agent invocation), follow these steps:
-
+   
    ###### Step 1: Implement Tool Function
    Create a function in the `tools` package (similar to `GetUserInfoById`) defining tool metadata and logic:
    ```go
@@ -210,37 +211,37 @@ To add new functionality:
            ),
        )
        
-   // 2. Implement tool logic (call microservice gRPC)
-   toolHandler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-       // Parse parameters from agent
-       arg := request.Params.Arguments.(map[string]any)
-       id := arg["id"].(float64)
-       
-       // Call microservice gRPC interface
-       address, err := c.GetUserAddress(context.Background(), &proto.IdRequest{
-           Id: int32(id),
-       })
-       if err != nil {
-           return nil, err
-       }
-       
-       // Format response as JSON
-       response, _ := json.Marshal(map[string]interface{}{
-           "user_id":  address.UserId,
-           "province": address.Province,
-           "city":     address.City,
-           "detail":   address.Detail,
-       })
-       
-       return mcp.NewToolResultText(string(response)), nil
-   }
+       // 2. Implement tool logic (call microservice gRPC)
+       toolHandler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+           // Parse parameters from agent
+           arg := request.Params.Arguments.(map[string]any)
+           id := arg["id"].(float64)
    
-   return toolInfo, toolHandler
+           // Call microservice gRPC interface
+           address, err := c.GetUserAddress(context.Background(), &proto.IdRequest{
+               Id: int32(id),
+           })
+           if err != nil {
+               return nil, err
+           }
+   
+           // Format response as JSON
+           response, _ := json.Marshal(map[string]interface{}{
+               "user_id":  address.UserId,
+               "province": address.Province,
+               "city":     address.City,
+               "detail":   address.Detail,
+           })
+   
+           return mcp.NewToolResultText(string(response)), nil
+       }
+   
+       return toolInfo, toolHandler
    }
    ```
    ###### Step 2: Register New Tool
    Add tool registration in `startMCPServer`:
-
+   
    ```go
    func startMCPServer(c proto.UserClient) {
        srv := server.NewMCPServer("UserService", mcp.LATEST_PROTOCOL_VERSION)
@@ -491,32 +492,32 @@ tool:
                mcp.Description("用户的ID"),
            ),
        )
-   // 2. 实现工具处理逻辑（调用微服务gRPC接口）
-   toolHandler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-       // 解析Agent传递的参数
-       arg := request.Params.Arguments.(map[string]any)
-       id := arg["id"].(float64)
-       
-       // 调用微服务gRPC接口
-       address, err := c.GetUserAddress(context.Background(), &proto.IdRequest{
-           Id: int32(id),
-       })
-       if err != nil {
-           return nil, err
-       }
-       
-       // 格式化响应结果为JSON
-       response, _ := json.Marshal(map[string]interface{}{
-           "user_id":  address.UserId,
-           "province": address.Province,
-           "city":     address.City,
-           "detail":   address.Detail,
-       })
-       
-       return mcp.NewToolResultText(string(response)), nil
-   }
+       // 2. 实现工具处理逻辑（调用微服务gRPC接口）
+       toolHandler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+           // 解析Agent传递的参数
+           arg := request.Params.Arguments.(map[string]any)
+           id := arg["id"].(float64)
    
-   return toolInfo, toolHandler
+           // 调用微服务gRPC接口
+           address, err := c.GetUserAddress(context.Background(), &proto.IdRequest{
+               Id: int32(id),
+           })
+           if err != nil {
+               return nil, err
+           }
+   
+           // 格式化响应结果为JSON
+           response, _ := json.Marshal(map[string]interface{}{
+               "user_id":  address.UserId,
+               "province": address.Province,
+               "city":     address.City,
+               "detail":   address.Detail,
+           })
+   
+           return mcp.NewToolResultText(string(response)), nil
+       }
+   
+       return toolInfo, toolHandler
    }
    ```
    ###### 步骤2：注册新工具到MCP Server
